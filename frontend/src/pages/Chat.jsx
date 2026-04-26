@@ -30,6 +30,10 @@ const Chat = () => {
       }
     });
 
+    newSocket.on('message_deleted', (messageId) => {
+      useChatStore.getState().removeMessage(messageId);
+    });
+
     newSocket.on('user_status_change', ({ userId, isOnline }) => {
       updateUserStatus(userId, isOnline);
     });
@@ -41,6 +45,7 @@ const Chat = () => {
     // Cleanup to avoid duplicate listeners
     return () => {
       newSocket.off('receive_message');
+      newSocket.off('message_deleted');
       newSocket.off('user_status_change');
       newSocket.off('user_typing');
       newSocket.disconnect();

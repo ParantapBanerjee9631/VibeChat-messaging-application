@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, MessageSquare, Bot, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, MessageSquare, Bot, Sparkles, AlertTriangle, Trash2 } from 'lucide-react';
 import useAuthStore from '../store/useAuthStore';
 import useChatStore from '../store/useChatStore';
 
@@ -55,6 +55,15 @@ const ChatBox = () => {
     setText('');
     clearSmartReplies();
     socket.emit('typing', { roomId: activeRoom, username: user.username, isTyping: false });
+  };
+
+  const handleDeleteMessage = (messageId) => {
+    if (!socket || !activeRoom) return;
+    socket.emit('delete_message', {
+      messageId,
+      roomId: activeRoom,
+      userId: user._id
+    });
   };
 
   const handleAskAI = (e) => {
@@ -139,8 +148,17 @@ const ChatBox = () => {
                 <div style={{ fontSize: '0.75rem', opacity: 0.8, marginBottom: '4px', color: '#3b82f6' }}>{msg.sender?.username}</div>
               )}
               <div className="message-content">{msg.text}</div>
-              <div className="message-meta">
+              <div className="message-meta" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {isMe && (
+                  <button 
+                    onClick={() => handleDeleteMessage(msg._id)}
+                    className="delete-message-btn"
+                    title="Delete message"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
               </div>
             </div>
           );

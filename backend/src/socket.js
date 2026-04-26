@@ -44,6 +44,19 @@ const initSocket = (io) => {
       socket.to(roomId).emit('user_typing', { username, isTyping });
     });
 
+    socket.on('delete_message', async (data) => {
+      const { messageId, roomId, userId } = data;
+      try {
+        const message = await Message.findById(messageId);
+        if (message && message.sender.toString() === userId) {
+          await Message.findByIdAndDelete(messageId);
+          io.to(roomId).emit('message_deleted', messageId);
+        }
+      } catch (error) {
+        console.error('Error deleting message:', error);
+      }
+    });
+
     socket.on('disconnect', async () => {
       console.log(`User disconnected: ${socket.id}`);
       if (socket.userId) {
