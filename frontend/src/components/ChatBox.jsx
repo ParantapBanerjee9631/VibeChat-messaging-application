@@ -5,7 +5,7 @@ import useChatStore from '../store/useChatStore';
 
 const ChatBox = () => {
   const { user } = useAuthStore();
-  const { messages, activeUser, activeGroupRoom, activeRoom, socket, isTyping, typingUser, askAI, summarizeChat, chatSummary, smartReplies, fetchSmartReplies, clearSmartReplies, isAIProcessing } = useChatStore();
+  const { messages, activeUser, activeGroupRoom, activeRoom, socket, isTyping, typingUser, askAI, summarizeChat, chatSummary, isAIProcessing } = useChatStore();
   const [text, setText] = useState('');
   const [errorMsg, setErrorMsg] = useState(null);
   const messagesEndRef = useRef(null);
@@ -16,19 +16,7 @@ const ChatBox = () => {
 
   useEffect(() => {
     scrollToBottom();
-    
-    // Fetch smart replies if the last message is from someone else in a DM
-    if (messages.length > 0 && !activeGroupRoom) {
-      const lastMsg = messages[messages.length - 1];
-      if (lastMsg.sender && lastMsg.sender._id !== user._id && lastMsg.sender._id !== 'ai') {
-        fetchSmartReplies(lastMsg.text);
-      } else {
-        clearSmartReplies();
-      }
-    } else {
-       clearSmartReplies();
-    }
-  }, [messages, isTyping, activeGroupRoom, user._id, fetchSmartReplies, clearSmartReplies]);
+  }, [messages, isTyping, activeGroupRoom, user._id]);
 
   useEffect(() => {
     if (!socket) return;
@@ -53,7 +41,7 @@ const ChatBox = () => {
     });
     
     setText('');
-    clearSmartReplies();
+
     socket.emit('typing', { roomId: activeRoom, username: user.username, isTyping: false });
   };
 
@@ -79,7 +67,7 @@ const ChatBox = () => {
 
     askAI(text);
     setText('');
-    clearSmartReplies();
+
   };
 
   const handleTyping = (e) => {
@@ -170,20 +158,7 @@ const ChatBox = () => {
       </div>
 
       <form className="chat-input-area" onSubmit={handleSend} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-        {smartReplies.length > 0 && (
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                {smartReplies.map((reply, i) => (
-                    <button 
-                        key={i} 
-                        type="button" 
-                        onClick={() => setText(reply)}
-                        style={{ whiteSpace: 'nowrap', padding: '0.4rem 0.75rem', background: '#1e293b', border: '1px solid #10b981', color: '#10b981', borderRadius: '16px', fontSize: '0.75rem', cursor: 'pointer' }}
-                    >
-                        {reply}
-                    </button>
-                ))}
-            </div>
-        )}
+
         <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
             <input 
               type="text" 

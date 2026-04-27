@@ -76,43 +76,7 @@ const summarizeRoom = async (req, res) => {
     }
 };
 
-const generateSmartReplies = async (req, res) => {
-    try {
-        const { lastMessage } = req.body;
-        
-        if (!process.env.GEMINI_API_KEY) {
-            return res.json({ replies: ["Sounds good!", "I'll let you know.", "Thanks!"] });
-        }
 
-        const prompt = `Generate exactly 3 short, natural-sounding quick replies (under 5 words each) to the following message:
-        "${lastMessage}"
-        
-        Format the output as a simple JSON array of strings, like this: ["reply1", "reply2", "reply3"]. Do not include markdown code block formatting in your response, just the raw JSON.`;
-    
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        
-        try {
-            // Strip potential markdown formatting if the model adds it anyway
-            let jsonText = response.text.trim();
-            if (jsonText.startsWith('```json')) {
-                jsonText = jsonText.substring(7, jsonText.length - 3).trim();
-            } else if (jsonText.startsWith('```')) {
-                jsonText = jsonText.substring(3, jsonText.length - 3).trim();
-            }
-            const replies = JSON.parse(jsonText);
-            res.json({ replies });
-        } catch (parseError) {
-             console.error("Failed to parse smart replies JSON", response.text);
-             res.json({ replies: ["Yes", "No", "Ok"] });
-        }
-    } catch (error) {
-        console.error('Smart Reply Error:', error);
-        res.status(500).json({ message: 'Smart reply generation failed', error: error.message });
-    }
-};
 
 const checkToxicity = async (text) => {
     if (!process.env.GEMINI_API_KEY) return false; // Fail open if no key
@@ -136,4 +100,4 @@ const checkToxicity = async (text) => {
     }
 };
 
-module.exports = { generateAIResponse, summarizeRoom, generateSmartReplies, checkToxicity };
+module.exports = { generateAIResponse, summarizeRoom, checkToxicity };

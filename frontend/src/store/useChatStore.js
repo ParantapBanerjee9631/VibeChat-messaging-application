@@ -12,14 +12,14 @@ const useChatStore = create((set, get) => ({
   isTyping: false,
   typingUser: null,
   chatSummary: null,
-  smartReplies: [],
+
   isAIProcessing: false,
 
   setSocket: (socket) => set({ socket }),
   
   setActiveRoom: async (user, currentUserId) => {
     const roomId = [user._id, currentUserId].sort().join('_');
-    set({ activeUser: user, activeGroupRoom: null, activeRoom: roomId, chatSummary: null, smartReplies: [] });
+    set({ activeUser: user, activeGroupRoom: null, activeRoom: roomId, chatSummary: null });
     
     try {
       const res = await api.get(`/chat/${roomId}`);
@@ -31,7 +31,7 @@ const useChatStore = create((set, get) => ({
   },
 
   setActiveGroupRoom: async (room) => {
-    set({ activeUser: null, activeGroupRoom: room, activeRoom: room._id, chatSummary: null, smartReplies: [] });
+    set({ activeUser: null, activeGroupRoom: room, activeRoom: room._id, chatSummary: null });
     
     try {
       const res = await api.get(`/chat/${room._id}`);
@@ -118,28 +118,20 @@ const useChatStore = create((set, get) => ({
     const { activeRoom } = get();
     if (!activeRoom) return;
     
-    set({ isAIProcessing: true });
+    set({ isAIProcessing: true, chatSummary: null });
     try {
       const res = await api.get(`/ai/summarize/${activeRoom}`);
       set({ chatSummary: res.data.summary });
     } catch (error) {
       console.error('Summarize Request Failed', error);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || "Failed to generate summary. Check backend logs.";
+      set({ chatSummary: `⚠️ AI Error: ${errorMessage}` });
     } finally {
       set({ isAIProcessing: false });
     }
   },
 
-  fetchSmartReplies: async (lastMessage) => {
-    if (!lastMessage) return;
-    try {
-      const res = await api.post('/ai/smart-replies', { lastMessage });
-      set({ smartReplies: res.data.replies });
-    } catch (error) {
-      console.error('Smart Replies Failed', error);
-    }
-  },
-  
-  clearSmartReplies: () => set({ smartReplies: [] })
+
 }));
 
 export default useChatStore;
